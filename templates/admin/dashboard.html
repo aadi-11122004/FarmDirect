@@ -1,0 +1,59 @@
+{% extends "_app_base.html" %}
+{% from "_macros.html" import sidenav %}
+{% block title %}Admin — {{ APP_NAME }}{% endblock %}
+{% block sidebar %}
+{{ sidenav(url_for('admin'), 'layout-dashboard', 'Platform admin') }}
+{{ sidenav(url_for('logistics'), 'route', 'Logistics') }}
+{{ sidenav(url_for('marketplace'), 'store', 'Marketplace') }}
+{% endblock %}
+{% block app_content %}
+  <div class="page-head">
+    <div><span class="role-tag">{{ icon('shield-check', 13) }} Admin</span><h1>Platform admin</h1><p class="fine">Live marketplace KPIs, logistics performance, model health &amp; AI pipeline</p></div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="card kpi"><span class="kicon">{{ icon('tractor', 20) }}</span><div><div class="kval">{{ kpi['farmers'] }} <span class="fine">+{{ kpi['fpos'] }} FPO</span></div><div class="klab">Sellers onboard</div></div></div>
+    <div class="card kpi"><span class="kicon">{{ icon('shopping-cart', 20) }}</span><div><div class="kval">{{ kpi['consumers'] + kpi['buyers'] }}</div><div class="klab">Buyers ({{ kpi['buyers'] }} bulk)</div></div></div>
+    <div class="card kpi"><span class="kicon">{{ icon('package', 20) }}</span><div><div class="kval">{{ kpi['orders'] }}</div><div class="klab">{{ kpi['delivered'] }} delivered</div></div></div>
+    <div class="card kpi"><span class="kicon">{{ icon('hand-coins', 20) }}</span><div><div class="kval">{{ kpi['gmv30']|inr }}</div><div class="klab">GMV last 30 days</div></div></div>
+  </div>
+  <div class="kpi-row">
+    <div class="card kpi green"><span class="kicon">{{ icon('trending-down', 20) }}</span><div><div class="kval">{{ kpi['save_pct'] }}%</div><div class="klab">Avg consumer saving</div></div></div>
+    <div class="card kpi green"><span class="kicon">{{ icon('tractor', 20) }}</span><div><div class="kval">+{{ kpi['premium'] }}%</div><div class="klab">Farmer realisation vs mandi price</div></div></div>
+    <div class="card kpi"><span class="kicon">{{ icon('route', 20) }}</span><div><div class="kval">{{ kpi['routes'] }} <span class="fine">routes · {{ kpi['regions'] }} depots</span></div><div class="klab">{{ kpi['route_km'] }} km planned by OR-Tools</div></div></div>
+    <div class="card kpi green"><span class="kicon">{{ icon('trending-down', 20) }}</span><div><div class="kval">{{ kpi['route_saved'] }} km <span class="fine">(−{{ kpi['route_pct'] }}%)</span></div><div class="klab">saved vs separate dispatch</div></div></div>
+  </div>
+  {% if metrics %}
+  <div class="kpi-row">
+    <div class="card kpi"><span class="kicon">{{ icon('target', 20) }}</span><div><div class="kval">{{ metrics['price_mape'] }}%</div><div class="klab">Price model MAPE (14-day hold-out)</div><div class="ksub">naive baseline {{ metrics['price_mape_naive'] }}%</div></div></div>
+    <div class="card kpi"><span class="kicon">{{ icon('package', 20) }}</span><div><div class="kval">{{ metrics['demand_mape'] }}%</div><div class="klab">Demand model WAPE (14-day hold-out)</div></div></div>
+    <div class="card kpi"><span class="kicon">{{ icon('sparkles', 20) }}</span><div><div class="kval">{{ metrics['n_crops'] }} crops</div><div class="klab">trained on {{ metrics['trained_on'] }}</div></div></div>
+  </div>
+  {% endif %}
+
+  <div class="two-col">
+    <div class="card"><h3>{{ icon('bar-chart-3', 18) }} GMV — last 14 days</h3>{{ gmv_chart }}</div>
+    <div class="card"><h3>{{ icon('trophy', 18) }} Top crops by volume (kg sold)</h3>{{ top_chart }}</div>
+  </div>
+
+  <div class="card">
+    <h3>{{ icon('sparkles', 18) }} AI forecast board <span class="fine">(14-day recursive forecast, RandomForest)</span></h3>
+    <div class="card table-card flush">
+      <table>
+        <thead><tr><th>Crop</th><th>Demand outlook (7d)</th><th>Forecast mandi price</th><th>Suggested farm-gate price</th><th>Platform retail</th></tr></thead>
+        <tbody>
+          {% for f in fc %}
+          <tr>
+            <td><b>{{ f['name'] }}</b></td>
+            <td><span class="badge ol-{{ f['outlook'] }}">{{ f['outlook'] }} {{ '+' if f['pct'] >= 0 else '' }}{{ f['pct'] }}%</span></td>
+            <td>₹{{ '%.1f'|format(f['mandi']) }}/kg</td>
+            <td><b>₹{{ '%.1f'|format(f['sug']) }}</b></td>
+            <td>₹{{ '%.1f'|format(f['sug'] * 1.08) }}</td>
+          </tr>
+          {% else %}<tr><td colspan="5" class="fine">No models trained yet — run <code>python ml/train_models.py</code>.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="fine">Pipeline: <code>ml/data/*.csv</code> (Agmarknet) → <code>ml/train_models.py</code> (hold-out validation, RandomForest price &amp; demand, recursive 14-day forecast) → tables <code>market_price_historical</code> / <code>demand_forecast_logs</code> → dashboards &amp; API (<code>/api/forecast/&lt;crop&gt;</code>). Routing: <code>routing/planner.py</code> → OR-Tools <code>routing/solver.py</code> → <code>/api/routes/optimize-all</code>.</p>
+  </div>
+{% endblock %}

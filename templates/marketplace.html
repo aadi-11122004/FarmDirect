@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_macros.html" import product_card %}
+{% block title %}Marketplace — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="wrap">
+  <div class="page-head">
+    <div>
+      <h1>Marketplace</h1>
+      <p class="fine">{{ items|length }} ready-to-ship listings · straight from farms near you</p>
+    </div>
+  </div>
+  <div class="mk-grid">
+    <aside class="card filters">
+      <h3>Filters</h3>
+      <form method="get" class="stack" id="filterForm">
+        <input name="q" value="{{ srch }}" placeholder="Search crop, farm, village…">
+        <label>Region
+          <select name="reg">
+            <option value="all" {{ 'selected' if reg == 'all' }}>All regions</option>
+            {% for d in depots %}<option value="{{ d['id'] }}" {{ 'selected' if reg == d['id']|string }}>{{ d['name'].replace(' Central Depot','') }}</option>{% endfor %}
+          </select>
+        </label>
+        <label>Category
+          <select name="cat">
+            <option value="">All</option>
+            {% for c in cats %}<option value="{{ c['category'] }}" {{ 'selected' if cat == c['category'] }}>{{ c['category'] }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="chk"><input type="checkbox" name="organic" value="1" {{ 'checked' if organic }}> {{ icon('leaf', 15) }} Organic only</label>
+        <label class="chk"><input type="checkbox" name="fpo" value="1" {{ 'checked' if fpo }}> {{ icon('handshake', 15) }} FPO aggregated only</label>
+        <label>Sort by
+          <select name="sort">
+            <option value="rating" {{ 'selected' if sort == 'rating' }}>Top rated</option>
+            <option value="price_asc" {{ 'selected' if sort == 'price_asc' }}>Price ↑</option>
+            <option value="price_desc" {{ 'selected' if sort == 'price_desc' }}>Price ↓</option>
+            <option value="saving" {{ 'selected' if sort == 'saving' }}>Biggest saving</option>
+          </select>
+        </label>
+        <button class="btn primary">Apply filters</button>
+        <a class="fine center" href="{{ url_for('marketplace') }}">Reset</a>
+      </form>
+      <hr>
+      <div class="fine">{{ icon('lightbulb', 14) }} Prices shown are farm-gate + logistics, benchmarked against the latest <b>mandi (Agmarknet)</b> price, while farmers earn more than selling to agents.</div>
+    </aside>
+    <section>
+      {% if items %}
+      <div class="grid-products">
+        {% for item in items %}{{ product_card(item) }}{% endfor %}
+      </div>
+      {% else %}
+      <div class="card empty">{{ icon('search', 22) }}<br>No listings match those filters. <a href="{{ url_for('marketplace') }}">Clear filters</a></div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

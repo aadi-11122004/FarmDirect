@@ -1,0 +1,51 @@
+{% extends "_app_base.html" %}
+{% from "_macros.html" import product_card, badge_status, sidenav %}
+{% block title %}My dashboard — {{ APP_NAME }}{% endblock %}
+{% block sidebar %}
+{{ sidenav(url_for('consumer_dash'), 'layout-dashboard', 'Dashboard') }}
+{{ sidenav(url_for('orders'), 'receipt', 'My orders') }}
+{{ sidenav(url_for('cart'), 'shopping-cart', 'Cart') }}
+{{ sidenav(url_for('marketplace'), 'store', 'Marketplace') }}
+{% endblock %}
+{% block app_content %}
+  <div class="page-head">
+    <div><span class="role-tag">{{ icon('home', 13) }} Home</span><h1>Welcome back, {{ user.name.split(' ')[0] }}</h1>
+      <p class="fine">Your orders, savings and today's best direct-from-farm picks</p></div>
+    <a class="btn primary" href="{{ url_for('marketplace') }}">{{ icon('store', 15) }} Shop marketplace</a>
+  </div>
+
+  <div class="kpi-row">
+    <div class="card kpi"><span class="kicon">{{ icon('receipt', 20) }}</span><div><div class="kval">{{ order_count }}</div><div class="klab">Orders placed</div></div></div>
+    <div class="card kpi green"><span class="kicon">{{ icon('hand-coins', 20) }}</span><div><div class="kval">{{ saved_total|inr }}</div><div class="klab">Saved vs retail, all time</div></div></div>
+    <div class="card kpi"><span class="kicon">{{ icon('truck', 20) }}</span><div><div class="kval">{{ active|length }}</div><div class="klab">Active deliveries</div></div></div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <h3>{{ icon('truck', 18) }} Active orders</h3>
+      {% for o in active %}
+      <div class="qrow">
+        <b>#{{ o['id'] }} · {{ o['total']|inr }}</b>
+        <span class="fine">{{ o['placed_on'] }} · {{ badge_status(o['status']) }}</span>
+        <a class="btn soft sm" href="{{ url_for('track', oid=o['id']) }}">Track {{ icon('arrow-right', 13) }}</a>
+      </div>
+      {% else %}<p class="fine">Nothing in transit right now.</p>{% endfor %}
+      <hr>
+      <a class="crumb" href="{{ url_for('orders') }}">All orders {{ icon('arrow-right', 13) }}</a>
+    </div>
+    <div class="card">
+      <h3>{{ icon('leaf', 18) }} Recently bought</h3>
+      {% if recent_crops %}
+      <div class="chips">{% for c in recent_crops %}<span class="mchip soft">{{ c }}</span>{% endfor %}</div>
+      {% else %}<p class="fine">Place your first order to see it here.</p>{% endif %}
+      <div class="ai-note">{{ icon('sparkles', 14) }} Prices you see are ranked against live mandi rates, so you always know the savings before you buy.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>{{ icon('sparkles', 18) }} Picked for your region <span class="fine">{{ depot['name'] if depot else '' }}</span></h3>
+    <div class="grid-products">
+      {% for item in picks %}{{ product_card(item) }}{% else %}<p class="fine">No active listings right now — check back soon.</p>{% endfor %}
+    </div>
+  </div>
+{% endblock %}

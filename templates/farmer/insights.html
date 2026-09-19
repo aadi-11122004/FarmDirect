@@ -1,0 +1,77 @@
+{% extends "_app_base.html" %}
+{% from "_macros.html" import sidenav %}
+{% block title %}AI Insights — {{ APP_NAME }}{% endblock %}
+{% block sidebar %}
+{{ sidenav(url_for('farmer_dash'), 'layout-dashboard', 'Dashboard') }}
+{{ sidenav(url_for('farmer_listings'), 'boxes', 'My listings') }}
+{{ sidenav(url_for('farmer_insights'), 'sparkles', 'AI insights') }}
+{{ sidenav(url_for('marketplace'), 'store', 'Marketplace') }}
+{% endblock %}
+{% block app_content %}
+  <div class="page-head">
+    <div>
+      <span class="role-tag">{{ icon('sparkles', 13) }} AI Insights</span>
+      <h1>Demand &amp; price forecast</h1>
+      <p class="fine">RandomForest models trained on Agmarknet mandi data</p>
+    </div>
+  </div>
+
+  <form method="get" class="search-bar">
+    <label class="sr-only" for="cropSearch">Search crop</label>
+    {{ icon('search', 16, cls='search-bar-ico') }}
+    <input type="search" id="cropSearch" name="crop" list="cropList" value="{{ sel or '' }}"
+           placeholder="Search a crop — e.g. Tomato, Wheat…" autocomplete="off">
+    <datalist id="cropList">
+      {% for c in my_crops %}<option value="{{ c['name'] }}">{% endfor %}
+    </datalist>
+    <button class="btn primary sm" type="submit">View forecast</button>
+  </form>
+
+  {% if ins %}
+  <div class="card">
+    <h3>{{ icon('trending-up', 18) }} {{ sel }} — 14-day AI forecast <span class="fine">(hover the chart for daily values)</span></h3>
+    {{ forecast_chart }}
+    <div class="ai-note">Outlook next 7 days: <b class="{{ 'up' if ins['outlook'] == 'high' else 'down' if ins['outlook'] == 'low' else '' }}">{{ ins['outlook'].upper() }} ({{ '+' if ins['outlook_pct'] >= 0 else '' }}{{ ins['outlook_pct'] }}%)</b> vs the past week. Model suggests listing at <b>₹{{ '%.1f'|format(ins['suggested']) }}/kg</b> farm-gate — you earn more than selling to agents, buyers still pay less.</div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="card kpi"><span class="kicon">{{ icon('calendar', 20) }}</span><div><div class="kval">{{ peak_demand_date }}</div><div class="klab">Peak demand date (next 14 days)</div><div class="ksub">{{ peak_demand_qty }} qtl expected</div></div></div>
+    <div class="card kpi"><span class="kicon">{{ icon('hand-coins', 20) }}</span><div><div class="kval">₹{{ avg_predicted_price }}</div><div class="klab">Average predicted price (14-day) / quintal</div></div></div>
+  </div>
+  {% else %}
+  <div class="card empty">{{ icon('package-x', 26) }}<br>No forecast model for {{ sel or 'your crops' }} yet. Models exist for: <b>{{ modelled|join(', ') or 'none' }}</b>.<br>
+    <span class="fine">Drop an Agmarknet CSV for more crops into <code>ml/data/</code> and run <code>python ml/train_models.py</code>.</span></div>
+  {% endif %}
+
+  <div class="card">
+    <h3>{{ icon('leaf', 17) }} Your crops at a glance</h3>
+    <div class="card table-card flush">
+      <table>
+        <thead><tr><th>Crop</th><th>Demand outlook (7d)</th><th>AI suggested price</th><th>Your current price</th><th>Advice</th></tr></thead>
+        <tbody>
+          {% for r in rows %}
+          <tr>
+            <td><b>{{ r['crop'].split(' (')[0] }}</b></td>
+            {% if r['modelled'] %}
+            <td><span class="badge ol-{{ r['outlook'] }}">{{ r['outlook'] }} {{ '+' if r['pct'] >= 0 else '' }}{{ r['pct'] }}%</span></td>
+            <td><b>₹{{ '%.1f'|format(r['suggested']) }}</b>/kg</td>
+            <td>{{ ('₹%.1f'|format(r['mine'])) if r['mine'] else '—' }}</td>
+            <td class="fine">
+              {% if r['mine'] and r['suggested'] %}
+                {% if r['mine'] < r['suggested'] * 0.92 %}You can raise price ~{{ ((r['suggested']/r['mine']-1)*100)|round|int }}%
+                {% elif r['mine'] > r['suggested'] * 1.12 %}Above model suggestion — consider matching
+                {% else %}Well priced — hold{% endif %}
+              {% else %}Add a listing to compare{% endif %}
+            </td>
+            {% else %}
+            <td class="fine" colspan="2">no mandi data for this crop yet</td>
+            <td>{{ ('₹%.1f'|format(r['mine'])) if r['mine'] else '—' }}</td>
+            <td class="fine">—</td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

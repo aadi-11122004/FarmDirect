@@ -1,0 +1,43 @@
+{% macro badge_status(s) %}<span class="badge st-{{ s }}">{{ s|replace('_',' ') }}</span>{% endmacro %}
+
+{% macro chip(text, kind='') %}<span class="mchip {{ kind }}">{{ text|safe }}</span>{% endmacro %}
+
+{% macro product_card(item) %}
+<a class="card product" href="{{ url_for('product', lid=item['id']) }}">
+  <div class="pimg cat-{{ item['category']|lower|replace(' ','-') }}">
+    {% if item['image_path'] %}<img src="{{ url_for('static', filename=item['image_path']) }}" alt="{{ item['crop_name'] }}">
+    {% else %}{{ crop_art(item['crop_name'], 64) }}{% endif %}
+    {% if item['organic'] %}<span class="flag organic">Organic</span>{% endif %}
+    {% if item['is_fpo'] %}<span class="flag fpo">FPO</span>{% endif %}
+  </div>
+  <div class="pbody">
+    <div class="ptop">
+      <h3>{{ item['crop_name'] }}</h3>
+      <span class="grade">Grade {{ item['grade'] }}</span>
+    </div>
+    <div class="pfarm">{{ icon('home', 13) }} {{ item['farm_name'] }} · {{ item['village'] }}</div>
+    <div class="pprice">
+      <b>₹{{ '%.1f'|format(item['price']) }}</b><span class="unit">/kg</span>
+      <s class="mandi">₹{{ '%g'|format(item['market_price']|round(1)) }}</s>
+      <span class="save">-{{ item['save_pct'] }}%</span>
+    </div>
+    <div class="pmeta">
+      <span>{{ icon('star', 13) }} {{ item['rating'] }}</span>
+      <span>{{ '%g'|format(item['qty_available']) }} kg left</span>
+      {% if item['min_order'] > 1 %}<span class="bulktag">Bulk min {{ '%g'|format(item['min_order']) }} kg</span>{% endif %}
+    </div>
+  </div>
+</a>
+{% endmacro %}
+
+{% macro kpi(ic, label, value, sub='') %}
+<div class="card kpi">
+  <span class="kicon">{{ icon(ic, 22) }}</span>
+  <div><div class="kval">{{ value }}</div><div class="klab">{{ label }}</div>
+  {% if sub %}<div class="ksub">{{ sub }}</div>{% endif %}</div>
+</div>
+{% endmacro %}
+
+{% macro sidenav(href, ic, label) %}
+<a href="{{ href }}" class="{{ 'active' if request.path == href else '' }}">{{ icon(ic, 17) }} {{ label }}</a>
+{% endmacro %}

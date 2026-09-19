@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="wrap app-shell role-{{ user.role if user else '' }}">
+  <aside class="app-sidebar">
+    <div class="side-title">{% block side_title %}{{ {'farmer':'Farmer desk','fpo':'FPO desk','buyer':'Buyer desk','logistics':'Logistics console','admin':'Admin','consumer':'My account'}.get(user.role, 'Menu') if user else 'Menu' }}{% endblock %}</div>
+    {% block sidebar %}{% endblock %}
+    <hr>
+    <div class="side-foot">{{ user.name if user else '' }}<br>{{ user.email if user else '' }}</div>
+  </aside>
+  <div class="app-main">
+    {% block app_content %}{% endblock %}
+  </div>
+</div>
+{% endblock %}

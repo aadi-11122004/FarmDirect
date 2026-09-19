@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge_status %}
+{% block title %}Track order #{{ order['id'] }} — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="wrap">
+  <a class="crumb" href="{{ url_for('orders') }}">{{ icon('arrow-left', 14) }} My orders</a>
+  <div class="page-head">
+    <div><h1>Order #{{ order['id'] }} {{ badge_status(order['status']) }}</h1>
+      <p class="fine">{{ order['buyer_name'] }} · {{ order['address'] }} · slot {{ order['slot'] }}</p></div>
+  </div>
+
+  {% if order['status'] == 'cancelled' %}
+    <div class="card empty">This order was cancelled.</div>
+  {% else %}
+  <div class="card">
+    <div class="timeline">
+      {% for s in steps %}
+      <div class="tl-step {{ 'done' if s.done }} {{ 'current' if s.current }}">
+        <div class="tl-dot">{{ icon('check', 14) if s.done else loop.index }}</div>
+        <div class="tl-lab">{{ s.label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="track-grid">
+    <div>
+      {% for leg in legs %}
+      <div class="card" style="margin-bottom:16px">
+        <h3>{{ icon('truck', 17) }} Delivery round {% if legs|length > 1 %}<span class="fine">· shipment {{ loop.index }} of {{ legs|length }}</span>{% endif %}</h3>
+        <div class="facts">
+          <div><span>Vehicle</span><b>{{ leg.vehicle }}</b></div>
+          <div><span>Driver</span><b>{{ leg.driver }}</b></div>
+          <div><span>Route</span><b>{{ leg.n_stops }} stops · {{ leg.km }} km</b></div>
+        </div>
+        {% for st in leg.my_stops %}
+        <div class="note">{{ icon('package', 13) if st['kind'] == 'pickup' else icon('map-pin', 13) }} {{ 'Pickup' if st['kind'] == 'pickup' else 'Delivery' }} — <b>{{ st['stop_name'] }}</b>
+          · stop #{{ st['pos'] }} of {{ leg.n_stops }} · ETA ≈ +{{ st['eta_min'] }} min after dispatch
+          · <span class="badge {{ 'st-delivered' if st['status'] == 'done' else 'st-assigned' }}">{{ 'done' if st['status'] == 'done' else 'pending' }}</span></div>
+        {% endfor %}
+        <div class="map-wrap {{ 'anim' if loop.first and order['status'] in ('assigned', 'in_transit') }}">{{ leg.map }}</div>
+        <p class="fine">Red ring = your stops on this vehicle's optimised route.</p>
+      </div>
+      {% else %}
+      <div class="card">
+        <h3>{{ icon('truck', 17) }} Delivery round</h3>
+        <p class="fine">Not yet routed — once the farmer packs your order it joins the next OR-Tools-optimised round from the regional depot.</p>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="card">
+      <h3>{{ icon('shopping-cart', 17) }} Items</h3>
+      <table>
+        <tbody>
+        {% for it in items %}
+          <tr><td>{{ it['crop_name'] }}</td><td>{{ '%g'|format(it['qty']) }} kg</td><td>{{ it['amount']|inr }}</td></tr>
+        {% endfor %}
+        <tr class="total-row"><td colspan="2"><b>Total (saved {{ order['savings']|inr }})</b></td><td><b>{{ order['total']|inr }}</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

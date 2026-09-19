@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Not found — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="wrap narrow center">
+  <div class="card empty" style="padding:60px 30px">
+    <div class="success-mark">{{ icon('wheat', 30) }}</div>
+    <h1>404 — page not found</h1>
+    <p class="fine">This field lies fallow. Let's get you back to the market.</p>
+    <a class="btn primary" href="{{ url_for('index') }}">{{ icon('arrow-left', 15) }} Back home</a>
+  </div>
+</div>
+{% endblock %}

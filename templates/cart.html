@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Cart — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="wrap">
+  <h1>{{ icon('shopping-cart', 24) }} Your basket</h1>
+  {% if rows %}
+  <form method="post" action="{{ url_for('cart_update') }}">
+    <div class="card table-card">
+      <table>
+        <thead><tr><th>Produce</th><th>From</th><th>Price</th><th>Qty (kg)</th><th>Amount</th><th></th></tr></thead>
+        <tbody>
+          {% for r in rows %}
+          <tr>
+            <td><b>{{ r['crop_name'] }}</b> <span class="grade">Grade {{ r['grade'] }}</span></td>
+            <td class="fine">{{ r['farm_name'] }}<br>{{ r['village'] }}</td>
+            <td>₹{{ '%.1f'|format(r['price']) }} <s class="mandi">₹{{ '%.0f'|format(r['market_price']) }}</s></td>
+            <td><input class="qty-in" type="number" name="qty_{{ r['id'] }}" value="{{ '%g'|format(r['qty']) }}" min="0" step="0.5"></td>
+            <td><b>{{ r['amount']|inr }}</b></td>
+            <td><button class="btn ghost sm" formaction="{{ url_for('cart_remove', lid=r['id']) }}" formnovalidate>{{ icon('x', 15) }}</button></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <button class="btn soft sm">Update quantities</button>
+  </form>
+  <div class="summary card">
+    <h3>Summary</h3>
+    <div class="srow"><span>Subtotal</span><b>{{ subtotal|inr }}</b></div>
+    <div class="srow green"><span>You save vs mandi price</span><b>-{{ savings|inr }}</b></div>
+    <div class="srow"><span>Delivery {{ 'FREE' if fee == 0 else '' }}</span><b>{{ (fee|inr) if fee else '₹0' }}</b></div>
+    {% if fee %}<div class="fine">Add {{ (499 - subtotal)|inr }} more for free delivery</div>{% endif %}
+    <div class="srow total"><span>Total</span><b>{{ (subtotal + fee)|inr }}</b></div>
+    <a class="btn primary lg full" href="{{ url_for('checkout') }}">Proceed to checkout {{ icon('arrow-right', 15) }}</a>
+  </div>
+  {% else %}
+  <div class="card empty">Your basket is empty. <a href="{{ url_for('marketplace') }}">Browse fresh produce {{ icon('arrow-right', 14) }}</a></div>
+  {% endif %}
+</div>
+{% endblock %}

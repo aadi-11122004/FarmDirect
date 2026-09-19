@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" role="img" aria-label="A route from a farm field to the city, with produce icons along the way">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f6f4ee"/>
+      <stop offset="100%" stop-color="#eef0e4"/>
+    </linearGradient>
+    <linearGradient id="field1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5a8f66"/>
+      <stop offset="100%" stop-color="#3f7350"/>
+    </linearGradient>
+    <linearGradient id="field2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#487a56"/>
+      <stop offset="100%" stop-color="#2f5a3d"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="480" fill="url(#sky)"/>
+
+  <!-- rolling field terraces -->
+  <path d="M0 300 C 90 270 150 320 240 290 C 330 260 380 310 460 285 C 520 265 580 295 640 275 L640 480 L0 480 Z" fill="url(#field1)"/>
+  <path d="M0 350 C 100 330 190 370 300 345 C 400 322 460 360 540 338 C 580 326 610 345 640 335 L640 480 L0 480 Z" fill="url(#field2)"/>
+
+  <!-- furrow lines -->
+  <g stroke="#2a4a34" stroke-width="2" opacity=".35" fill="none">
+    <path d="M20 365 C 140 345 220 385 340 358 C 440 336 520 372 620 352"/>
+    <path d="M10 395 C 140 378 230 412 350 388 C 450 368 540 400 630 382"/>
+    <path d="M0 425 C 140 410 240 438 360 418 C 460 400 550 428 640 412"/>
+  </g>
+
+  <!-- farm marker -->
+  <g transform="translate(96,246)">
+    <rect x="-26" y="-6" width="52" height="34" rx="4" fill="#fff"/>
+    <path d="M-30 -6 L0 -30 L30 -6 Z" fill="#b5622f"/>
+    <rect x="-6" y="10" width="12" height="18" fill="#a9822a"/>
+  </g>
+
+  <!-- route: dashed line from farm to city with stop dots -->
+  <path d="M108 250 C 200 190 300 210 380 150 C 440 108 500 118 560 78" fill="none" stroke="#1b3e26" stroke-width="3" stroke-dasharray="2 10" stroke-linecap="round"/>
+  <circle cx="220" cy="197" r="7" fill="#245536" stroke="#fff" stroke-width="2.5"/>
+  <circle cx="352" cy="162" r="7" fill="#245536" stroke="#fff" stroke-width="2.5"/>
+  <circle cx="470" cy="103" r="8" fill="#b5622f" stroke="#fff" stroke-width="2.5"/>
+
+  <!-- city skyline -->
+  <g transform="translate(492,40)" fill="#1b3e26">
+    <rect x="0" y="70" width="26" height="70" rx="2"/>
+    <rect x="30" y="46" width="30" height="94" rx="2"/>
+    <rect x="64" y="60" width="24" height="80" rx="2"/>
+    <rect x="92" y="24" width="30" height="116" rx="2"/>
+    <g fill="#f6f4ee" opacity=".55">
+      <rect x="6" y="80" width="5" height="5"/><rect x="16" y="80" width="5" height="5"/>
+      <rect x="6" y="96" width="5" height="5"/><rect x="16" y="96" width="5" height="5"/>
+      <rect x="38" y="58" width="5" height="5"/><rect x="50" y="58" width="5" height="5"/>
+      <rect x="38" y="74" width="5" height="5"/><rect x="50" y="74" width="5" height="5"/>
+      <rect x="38" y="90" width="5" height="5"/><rect x="50" y="90" width="5" height="5"/>
+      <rect x="100" y="40" width="5" height="5"/><rect x="112" y="40" width="5" height="5"/>
+      <rect x="100" y="56" width="5" height="5"/><rect x="112" y="56" width="5" height="5"/>
+      <rect x="100" y="72" width="5" height="5"/><rect x="112" y="72" width="5" height="5"/>
+    </g>
+  </g>
+
+  <!-- produce crates near the farm -->
+  <g transform="translate(150,300)">
+    <rect x="0" y="0" width="34" height="24" rx="3" fill="#e0793f"/>
+    <rect x="0" y="0" width="34" height="6" rx="3" fill="#b5622f"/>
+    <rect x="42" y="8" width="34" height="24" rx="3" fill="#c9a227"/>
+    <rect x="42" y="8" width="34" height="6" rx="3" fill="#a9822a"/>
+  </g>
+</svg>

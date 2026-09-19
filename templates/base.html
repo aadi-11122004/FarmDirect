@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ APP_NAME }} — Farm to Table, Direct{% endblock %}</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231b3e26'><path d='M12 3c4 3 6 7 6 10.5 0 3-2.2 5.5-6 6.5-3.8-1-6-3.5-6-6.5C6 10 8 6 12 3Z'/></svg>">
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet/leaflet.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap nav">
+    <a class="brand" href="{{ url_for(({'farmer':'farmer_dash','buyer':'buyer_dash','logistics':'logistics','admin':'admin','consumer':'consumer_dash'}.get(user.role) if user else None) or 'index') }}">
+      <span class="mark">{{ brand_mark(17) }}</span> <b>{{ APP_NAME }}</b><span class="tagline">Farm → Table, direct</span>
+    </a>
+    <nav class="links">
+      {% if not user or user.role != 'logistics' %}<a href="{{ url_for('marketplace') }}">Marketplace</a>{% endif %}
+      {% if user and user.role == 'farmer' %}
+        <a href="{{ url_for('farmer_dash') }}">Dashboard</a>
+        <a href="{{ url_for('farmer_insights') }}">AI Insights</a>
+        <a href="{{ url_for('farmer_listings') }}">My Listings</a>
+      {% elif user and user.role == 'buyer' %}
+        <a href="{{ url_for('buyer_dash') }}">Buyer Hub</a>
+        <a href="{{ url_for('buyer_aggregate') }}">Smart Sourcing</a>
+        <a href="{{ url_for('orders') }}">My Orders</a>
+      {% elif user and user.role == 'consumer' %}
+        <a href="{{ url_for('consumer_dash') }}">Dashboard</a>
+        <a href="{{ url_for('orders') }}">My Orders</a>
+      {% elif user and user.role == 'logistics' %}
+        <a href="{{ url_for('logistics') }}">Logistics Console</a>
+      {% elif user and user.role == 'admin' %}
+        <a href="{{ url_for('admin') }}">Admin</a>
+        <a href="{{ url_for('logistics') }}">Logistics</a>
+      {% endif %}
+    </nav>
+    <div class="nav-right">
+      {% if user %}
+        {% if user.role in ('consumer', 'buyer') %}
+          <a class="cart" href="{{ url_for('cart') }}">{{ icon('shopping-cart', 17) }} Cart{% if cart_count %} <span class="pill">{{ cart_count }}</span>{% endif %}</a>
+        {% endif %}
+        <span class="chip">{{ icon('user', 13) }} {{ user.name.split(' ')[0] }} · {{ user.role }}</span>
+        <form method="post" action="{{ url_for('logout') }}" class="inline"><button class="btn ghost sm">Logout</button></form>
+      {% else %}
+        <a class="btn ghost sm" href="{{ url_for('login') }}">Login</a>
+        <a class="btn primary sm" href="{{ url_for('register') }}">Join free</a>
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+{% with msgs = get_flashed_messages(with_categories=true) %}
+  {% if msgs %}<div class="wrap toasts">{% for cat, m in msgs %}<div class="toast {{ cat }}">{{ m|deemoji }}</div>{% endfor %}</div>{% endif %}
+{% endwith %}
+
+<main>{% block content %}{% endblock %}</main>
+
+<footer>
+  <div class="wrap cols">
+    <div>
+      <div class="brand"><span class="mark">{{ brand_mark(17) }}</span> <b>{{ APP_NAME }}</b></div>
+      <p>Direct digital marketplace connecting farmers &amp; FPOs with consumers and bulk buyers — with AI demand forecasting, smart supply aggregation and OR-Tools route optimisation.</p>
+    </div>
+    <div>
+      <h4>Explore</h4>
+      <a href="{{ url_for('marketplace') }}">Marketplace</a>
+      <a href="{{ url_for('login') }}">Demo logins</a>
+      <a href="{{ url_for('register') }}">Join as farmer</a>
+    </div>
+    <div>
+      <h4>Demo accounts</h4>
+      <span class="fine">password: demo123</span>
+      <span class="fine">ramesh@fl.in — farmer (Pune)</span>
+      <span class="fine">fpo@fl.in — FPO</span>
+      <span class="fine">consumer@fl.in — consumer</span>
+      <span class="fine">buyer@fl.in — bulk buyer</span>
+      <span class="fine">ocmart@fl.in — bulk buyer (Nagpur)</span>
+      <span class="fine">logistics@fl.in — logistics</span>
+      <span class="fine">admin@fl.in — admin</span>
+    </div>
+  </div>
+</footer>
+<script>window.FARMLINK = {{ {"tileUrl": CARTO_TILE_URL, "cartoKey": CARTO_API_KEY}|tojson }};</script>
+<script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

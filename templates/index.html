@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% from "_macros.html" import product_card, chip %}
+{% block content %}
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <span class="eyebrow">{{ icon('sparkles', 13) }} Digital Marketplace · Agriculture, FoodTech &amp; Rural Development</span>
+      <h1>Farm to Table	, <em>without the middlemen.</em></h1>
+      <p class="lede">{{ APP_NAME }} connects <b>farmers &amp; FPOs</b> directly with <b>consumers and bulk buyers</b>. AI forecasts <b>mandi demand &amp; prices</b>, <b>smart aggregation</b> pools supply from many farms, and an <b>OR-Tools router</b> plans every pickup and delivery — so farmers earn more and consumers pay less.</p>
+      <div class="cta-row">
+        <a class="btn primary lg" href="{{ url_for('marketplace') }}">{{ icon('shopping-cart', 16) }} Shop fresh produce</a>
+        <a class="btn outline lg" href="{{ url_for('register') }}">{{ icon('tractor', 16) }} Sell as farmer / FPO</a>
+      </div>
+      <div class="chips">
+        {{ chip(icon('x-circle', 13)|string ~ " Zero commission agents") }} {{ chip(icon('sparkles', 13)|string ~ " AI price + demand signals") }}
+        {{ chip(icon('layers', 13)|string ~ " Smart supply aggregation") }} {{ chip(icon('route', 13)|string ~ " OR-Tools multi-depot routing") }}
+      </div>
+    </div>
+    <div class="hero-img">
+      <img src="{{ url_for('static', filename='img/hero.jpg') }}" alt="A route from farm fields to the city, with produce crates along the way">
+      <div class="hero-float card">
+        <div class="hf-row"><span> Farmer gets</span><b>more than the agent price <span class="up">▲</span></b></div>
+        <div class="hf-row"><span> Consumer pays</span><b> {{ stats.save_pct }}% below mandi <span class="down">▼</span></b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap statstrip">
+  <div class="stat"><b>{{ stats.farmers }}+{{ stats.fpos }}</b><span>Farmers &amp; FPOs onboard</span></div>
+  <div class="stat"><b>{{ stats.listings }}</b><span>Live produce listings</span></div>
+  <div class="stat"><b>{{ stats.regions }}</b><span>Regions · depots live</span></div>
+  <div class="stat green"><b>{{ stats.save_pct }}%</b><span>Avg. consumer saving vs mandi</span></div>
+</section>
+
+<section class="wrap">
+  <h2 class="sec">{{ icon('sparkles', 20) }} AI demand outlook <span class="fine">(RandomForest on Agmarknet mandi data · next 14 days)</span></h2>
+  <div class="chip-row">
+    {% for c in chips %}
+      <div class="card aichip">
+        <span class="big">{{ crop_art(c.name, 26) }}</span>
+        <div><b>{{ c.name }}</b>
+          <div class="fine">mandi demand, next 7 days vs last 7</div>
+        </div>
+        <span class="delta {{ 'up' if c.pct >= 0 else 'down' }}">{{ '+' if c.pct >= 0 else '' }}{{ c.pct }}%</span>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="wrap">
+  <h2 class="sec">How {{ APP_NAME }} works</h2>
+  <div class="grid3">
+    <div class="card step"><span class="num">1</span><h3>List directly</h3><p>Farmers &amp; FPOs list harvest with grade, quantity and an <b>AI-suggested fair price</b> — no commission agents, no distress sale.</p></div>
+    <div class="card step"><span class="num">2</span><h3>Order direct</h3><p>Consumers order retail baskets; restaurants, messes &amp; retailers buy <b>wholesale with bulk quotes</b> straight from the farm.</p></div>
+    <div class="card step"><span class="num">3</span><h3>Aggregate &amp; route</h3><p>Bulk buyers get farm-wise <b>smart aggregation</b>; per-region depots run an <b>OR-Tools pickup-and-delivery solver</b> that batches orders into the fewest, shortest vehicle routes.</p></div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2 class="sec">Fresh from our farms</h2>
+  <div class="grid-products">
+    {% for item in featured %}{{ product_card(item) }}{% endfor %}
+  </div>
+  <div class="center"><a class="btn outline" href="{{ url_for('marketplace') }}">Browse all {{ stats.listings }} listings {{ icon('arrow-right', 15) }}</a></div>
+</section>
+
+<section class="wrap card">
+  <h2 class="sec">{{ icon('trending-up', 20) }} Impact vs the traditional supply chain</h2>
+  <div class="imp-grid">
+    <div class="imp"><b>≈ {{ stats.save_pct }}%</b><span>consumers pay less than mandi-retail prices</span></div>
+    <div class="imp"><b>≈ {{ kpi_premium if kpi_premium else 20 }}%</b><span>higher farmer realisation per kg (no 4–6 intermediary margins)</span></div>
+    <div class="imp"><b>{{ stats.delivered }}</b><span>orders delivered through the platform in this demo</span></div>
+    <div class="imp"><b>14 days</b><span>of AI demand forecast per crop, for harvest &amp; pricing planning</span></div>
+  </div>
+</section>
+
+<section class="wrap roles">
+  {% for r in [
+    ('tractor', 'Farmers & FPOs', 'List produce, get AI price suggestions, see demand forecasts, receive bulk quotes.', 'farmer'),
+    ('shopping-cart', 'Consumers', 'Farm-fresh produce below mandi-linked retail, with farm traceability.', 'consumer'),
+    ('building-2', 'Bulk buyers', 'Smart sourcing: ranked farms, farm-wise allocation and a priced pickup route.', 'buyer'),
+    ('truck', 'Logistics', 'Per-depot OR-Tools route optimisation, capacity-aware, live stop mark-off.', 'logistics')] %}
+  <div class="card role">
+    <span class="remoji">{{ icon(r[0], 22) }}</span><h3>{{ r[1] }}</h3><p>{{ r[2] }}</p>
+    <a class="btn outline sm" href="{{ url_for('login') }}">Open demo {{ icon('arrow-right', 14) }}</a>
+  </div>
+  {% endfor %}
+</section>
+
+{% endblock %}

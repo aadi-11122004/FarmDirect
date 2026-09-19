@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge_status %}
+{% block title %}My orders — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="wrap">
+  <h1>My orders</h1>
+  {% if orders %}
+    {% for o in orders %}
+    <div class="card order-card">
+      <div class="oc-head">
+        <div><b>Order #{{ o['id'] }}</b> <span class="fine">· {{ o['placed_on'] }} · {{ o['payment_mode'] }}</span>
+          <div class="fine">{{ o['address'] }}</div></div>
+        <div class="oc-right">
+          {{ badge_status(o['status']) }}
+          <div><b>{{ o['total']|inr }}</b> <span class="fine green">(saved {{ o['savings']|inr }})</span></div>
+          <a class="btn soft sm" href="{{ url_for('track', oid=o['id']) }}">Track →</a>
+        </div>
+      </div>
+      <div class="oc-items">
+        {% for it in items.get(o['id'], []) %}
+          <span class="mchip soft">{{ it['crop_name'] }} × {{ '%g'|format(it['qty']) }} kg</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <div class="card empty">No orders yet. <a href="{{ url_for('marketplace') }}">Start shopping →</a></div>
+  {% endif %}
+</div>
+{% endblock %}

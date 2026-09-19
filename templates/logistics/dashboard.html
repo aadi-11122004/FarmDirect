@@ -1,0 +1,132 @@
+{% extends "_app_base.html" %}
+{% from "_macros.html" import sidenav %}
+{% block title %}Logistics console — {{ APP_NAME }}{% endblock %}
+{% block sidebar %}
+{{ sidenav(url_for('logistics'), 'route', 'Logistics console') }}
+{% endblock %}
+{% block app_content %}
+  <div class="page-head">
+    <div><span class="role-tag">{{ icon('truck', 13) }} Logistics</span><h1>Logistics console</h1>
+      <p class="fine">{{ depot['name'] }} · capacity-aware pickup-and-delivery routing with Google OR-Tools · one independent plan per depot</p></div>
+    <div class="chip-row tight">
+      {% for d in depots %}
+      <a class="mchip {{ 'active' if d['id'] == depot['id'] }}" href="{{ url_for('logistics', d=d['id']) }}">{{ icon('factory', 14) }} {{ d['name'].replace(' Central Depot', '') }}</a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="card kpi"><span class="kicon">{{ icon('download', 20) }}</span><div><div class="kval">{{ kpi['pool'] }} <span class="fine">· {{ kpi['pool_kg'] }} kg</span></div><div class="klab">Packed orders awaiting pickup</div></div></div>
+    <div class="card kpi"><span class="kicon">{{ icon('truck', 20) }}</span><div><div class="kval">{{ kpi['free'] }} / {{ kpi['fleet'] }}</div><div class="klab">Vehicles free at this depot</div></div></div>
+    <div class="card kpi"><span class="kicon">{{ icon('route', 20) }}</span><div><div class="kval">{{ kpi['routes'] }} <span class="fine">· {{ kpi['km'] }} km</span></div><div class="klab">Routes planned today</div></div></div>
+    <div class="card kpi green"><span class="kicon">{{ icon('trending-down', 20) }}</span><div><div class="kval">{{ kpi['saved'] if kpi['routes'] else '—' }} km</div><div class="klab">Saved vs dispatching orders separately</div></div></div>
+  </div>
+
+  <div class="stack-cards">
+    <div class="card">
+      <div class="map-card-head">
+        <h3>{{ icon('map', 18) }} {{ 'Route map' if route else 'Pickup pool' }}
+          <span class="fine">{{ '(numbered stops in driving order)' if route else '(green = farm pickup, terracotta = delivery, dashed = order)' }}</span></h3>
+        {% if map %}
+        <button type="button" class="map-max-btn map-max-btn-inline" data-target="poolMap" title="Maximize map" aria-label="Maximize map">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          Maximize
+        </button>
+        {% endif %}
+      </div>
+      {% if routes %}
+      <div class="chip-row tight">
+        {% for r in routes %}
+        <a class="mchip {{ 'active' if route and r['id'] == route['id'] }}" href="{{ url_for('logistics', d=depot['id'], r=r['id']) }}">
+          {{ icon('circle-check-big', 13) if r['status'] == 'completed' else icon('truck', 13) }} {{ r['code'] }} · {{ r['total_km'] }} km</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if map %}<div class="map-wrap pool-map" id="poolMap">{{ map }}</div>{% else %}<div class="card empty">Nothing to show — no packed orders waiting and no routes planned.</div>{% endif %}
+      <div class="cta-row">
+        <form method="post" action="{{ url_for('logistics_optimize') }}">
+          <input type="hidden" name="scope" value="one"><input type="hidden" name="d" value="{{ depot['id'] }}">
+          <button class="btn primary" {{ 'disabled' if not kpi['pool'] }}>{{ icon('zap', 15) }} Optimize {{ depot['name'].replace(' Central Depot', '') }} with OR-Tools</button>
+        </form>
+        <form method="post" action="{{ url_for('logistics_optimize') }}">
+          <input type="hidden" name="scope" value="all"><input type="hidden" name="d" value="{{ depot['id'] }}">
+          <button class="btn outline">Optimize all regions</button>
+        </form>
+        <form method="post" action="{{ url_for('logistics_reset') }}">
+          <input type="hidden" name="d" value="{{ depot['id'] }}">
+          <button class="btn ghost">{{ icon('refresh-cw', 14) }} Reset plan (demo)</button>
+        </form>
+      </div>
+      {% if route %}
+      <div class="ai-note">{{ icon('sparkles', 14) }} <b>{{ route['code'] }}</b> ({{ route['driver_name'] }}, {{ route['vtype'] }}): {{ stops|length }} stops · <b>{{ route['total_km'] }} km</b> ≈ {{ route['est_minutes'] }} min
+        · load {{ '%g'|format(route['load_kg']) }} of {{ '%g'|format(route['capacity_kg']) }} kg.
+        Dispatching its orders separately would take <b>{{ route['naive_km'] }} km</b>
+        {% if route['naive_km'] > route['total_km'] %}(−{{ ((route['naive_km'] - route['total_km']) / route['naive_km'] * 100)|round|int }}%){% endif %}.
+        {% if route['matrix_source'] == 'osrm' %}<span class="badge st-delivered">live road distances</span>{% else %}<span class="badge st-placed">offline straight-line estimate</span>{% endif %}</div>
+      {% elif kpi['pool'] %}
+      <div class="ai-note">{{ icon('download', 14) }} {{ kpi['pool'] }} order(s) are packed and waiting. Sending each on its own trip would cost ≈ <b>{{ naive_est }} km</b> (straight-line). Click optimize to batch them into capacity-aware routes.</div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      {% if route %}
+      <h3>{{ icon('list', 18) }} Stops in order <span class="fine">· {{ route['code'] }}</span></h3>
+      <div class="card table-card flush">
+        <table>
+          <thead><tr><th>#</th><th>Stop</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {% for s in stops %}
+            <tr class="{{ 'dim' if s['status'] == 'done' }}">
+              <td><span class="stopnum">{{ loop.index }}</span></td>
+              <td><b>{{ icon('package', 14) if s['kind'] == 'pickup' else icon('map-pin', 14) }} {{ s['stop_name'] }}</b>
+                <div class="fine">{{ '%g'|format(s['qty']) }} kg · <a href="{{ url_for('track', oid=s['order_id']) }}">order #{{ s['order_id'] }}</a> · ETA +{{ s['eta_min'] }} min</div></td>
+              <td><span class="badge {{ 'st-delivered' if s['status'] == 'done' else 'st-placed' }}">{{ s['status'] }}</span></td>
+              <td>
+                {% if s['status'] != 'done' %}
+                  {% if s['kind'] == 'drop' and s['pickup_pending'] %}<span class="fine">awaiting pickup</span>
+                  {% else %}
+                  <form method="post" action="{{ url_for('logistics_stop_done', sid=s['id']) }}"><button class="btn soft sm">{{ icon('check', 13) }} {{ 'Picked up' if s['kind'] == 'pickup' else 'Delivered' }}</button></form>
+                  {% endif %}
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      <h3>{{ icon('download', 18) }} Awaiting pickup <span class="fine">(packed by farmers, not yet routed)</span></h3>
+      {% for o in pool %}
+      <div class="qrow"><b>#{{ o['order_id'] }} → {{ o['area'] }} · {{ '%g'|format(o['kg']) }} kg</b>
+        <span class="fine">{{ o['crops']|join(', ') }} · from {{ o['farms']|join(', ') }} · {{ o['slot'] }}</span></div>
+      {% else %}<p class="fine">None — every packed order is routed.</p>{% endfor %}
+    </div>
+  </div>
+
+  {% if routes %}
+  <div class="card">
+    <h3>{{ icon('list', 18) }} Today's routes — {{ depot['name'] }}</h3>
+    <div class="card table-card flush">
+      <table>
+        <thead><tr><th>Vehicle</th><th>Driver</th><th>Load / capacity</th><th>Stops</th><th>Distance</th><th>Separate dispatch</th><th>Saved</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for r in routes %}
+          <tr>
+            <td><b>{{ r['code'] }}</b><div class="fine">{{ r['vtype'] }}</div></td>
+            <td>{{ r['driver_name'] }}</td>
+            <td>{{ '%g'|format(r['load_kg']) }} / {{ '%g'|format(r['capacity_kg']) }} kg</td>
+            <td>{{ r['est_minutes'] }} min</td>
+            <td><b>{{ r['total_km'] }} km</b></td>
+            <td class="fine">{{ r['naive_km'] }} km</td>
+            <td class="green"><b>{{ ((r['naive_km'] - r['total_km']) / r['naive_km'] * 100)|round|int if r['naive_km'] else 0 }}%</b></td>
+            <td><span class="badge {{ 'st-delivered' if r['status'] == 'completed' else 'st-in_transit' }}">{{ r['status'] }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="fine">Objective: minimise total travel time · constraints: vehicle capacity (simultaneous load), pickup before its delivery, {{ shift_h }} h driver shift incl. handling time. Orders that cannot fit are reported instead of failing the plan.</p>
+  </div>
+  {% endif %}
+{% endblock %}

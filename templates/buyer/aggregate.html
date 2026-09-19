@@ -1,0 +1,113 @@
+{% extends "_app_base.html" %}
+{% from "_macros.html" import sidenav %}
+{% block title %}Smart sourcing — {{ APP_NAME }}{% endblock %}
+{% block sidebar %}
+{{ sidenav(url_for('buyer_dash'), 'layout-dashboard', 'Dashboard') }}
+{{ sidenav(url_for('buyer_aggregate'), 'layers', 'Smart sourcing') }}
+{{ sidenav(url_for('orders'), 'receipt', 'My orders') }}
+{{ sidenav(url_for('marketplace', sort='price_asc'), 'store', 'Wholesale marketplace') }}
+{% endblock %}
+{% block app_content %}
+  <a class="crumb" href="{{ url_for('buyer_dash') }}">{{ icon('arrow-left', 14) }} Buyer Hub</a>
+  <div class="page-head">
+    <div><span class="role-tag">{{ icon('layers', 13) }} Smart sourcing</span><h1>Pool supply across farms</h1>
+      <p class="fine">Tell us what you need — we rank farms (price · distance · quality · availability · reliability), pool the best supply and price the pickup route with the OR-Tools optimizer.</p></div>
+  </div>
+
+  <div class="card">
+    <form method="get" class="form-row">
+      <label>Crop
+        <select name="crop" required>
+          {% for c in crops %}<option value="{{ c['name'] }}" {{ 'selected' if form.get('crop') == c['name'] }}>{{ c['name'] }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Quantity (kg)<input type="number" name="qty" min="1" value="{{ form.get('qty', 1200) }}" required></label>
+      <label>Min. grade
+        <select name="grade">{% for g in ['A','B','C'] %}<option {{ 'selected' if form.get('grade', 'A') == g }}>{{ g }}</option>{% endfor %}</select>
+      </label>
+      <label>Needed by<input type="date" name="by" value="{{ form.get('by', default_date) }}"></label>
+      <label>Max ₹/kg <span class="fine">(optional)</span><input type="number" name="max_price" step="0.5" value="{{ form.get('max_price', '') }}"></label>
+      <label>Max distance (km)<input type="number" name="max_dist" min="5" value="{{ form.get('max_dist', 150) }}"></label>
+      <button class="btn primary">Find &amp; aggregate</button>
+    </form>
+    <p class="fine">Delivery to: {{ user['address'] }}</p>
+  </div>
+
+  {% if plan %}
+  <div class="kpi-row">
+    <div class="card kpi"><span class="kicon">{{ icon('circle-check-big', 20) }}</span><div><div class="kval">{{ '%g'|format(plan['allocated_quantity_kg']) }} / {{ '%g'|format(plan['required_quantity_kg']) }} kg</div><div class="klab">{{ 'Requirement fulfilled' if plan['fulfilled'] else 'Partially fulfilled' }}</div></div></div>
+    <div class="card kpi"><span class="kicon">{{ icon('tractor', 20) }}</span><div><div class="kval">{{ plan['pickup_count'] }}</div><div class="klab">Farms in the plan</div></div></div>
+    <div class="card kpi"><span class="kicon">{{ icon('truck', 20) }}</span><div><div class="kval">{{ plan['estimated_logistics']|inr }}</div><div class="klab">{% if plan['route'] %}Logistics · {{ plan['route']['km'] }} km optimised route{% else %}Logistics (estimate){% endif %}</div></div></div>
+    <div class="card kpi green"><span class="kicon">{{ icon('hand-coins', 20) }}</span><div><div class="kval">{{ plan['estimated_total']|inr }}</div><div class="klab">Estimated total</div></div></div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <h3>{{ icon('package', 18) }} Farm-wise allocation</h3>
+      <div class="card table-card flush">
+        <table>
+          <thead><tr><th>Farm</th><th>Qty</th><th>₹/kg</th><th>Subtotal</th><th>Dist.</th><th>Score</th></tr></thead>
+          <tbody>
+            {% for a in plan['allocations'] %}
+            <tr>
+              <td><b>{{ a['farmer_name'] }}</b><div class="fine">{{ a['village'] }} · Grade {{ a['quality_grade'] }}
+                {% if a['harvest_type'] == 'EXPECTED' %}· <span class="badge st-placed">expected harvest</span>{% endif %}</div></td>
+              <td>{{ '%g'|format(a['quantity_kg']) }} kg</td>
+              <td>₹{{ '%.1f'|format(a['price_per_kg']) }}</td>
+              <td><b>{{ a['produce_subtotal']|inr }}</b></td>
+              <td class="fine">{{ a['distance_km'] }} km</td>
+              <td><span class="badge ol-high">{{ a['match_score'] }}</span></td>
+            </tr>
+            {% else %}<tr><td colspan="6" class="fine">No eligible supply for these filters — try a lower grade, higher max price or larger distance.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="srow"><span>Produce</span><b>{{ plan['produce_subtotal']|inr }}</b></div>
+      <div class="srow"><span>Logistics</span><b>{{ plan['estimated_logistics']|inr }}</b></div>
+      <div class="srow"><span>Extra pickups ({{ plan['pickup_count'] - 1 if plan['pickup_count'] else 0 }} × ₹200)</span><b>{{ plan['pickup_penalty']|inr }}</b></div>
+      <div class="srow total"><span>Estimated total</span><b>{{ plan['estimated_total']|inr }}</b></div>
+      <div class="fine">{{ plan['note'] }}</div>
+      {% if not plan['fulfilled'] %}
+      <div class="note">{{ icon('alert-triangle', 15) }} Short by <b>{{ '%g'|format(plan['remaining_quantity_kg']) }} kg</b> with these filters. Confirmed supply {{ '%g'|format(matched['confirmed_supply_kg']) }} kg + expected harvest {{ '%g'|format(matched['expected_supply_kg']) }} kg.</div>
+      {% endif %}
+      {% if plan['allocations'] %}
+      <form method="post" action="{{ url_for('buyer_aggregate_order') }}" class="cta-row">
+        {% for k in ['crop','qty','grade','by','max_price','max_dist'] %}<input type="hidden" name="{{ k }}" value="{{ form.get(k, '') }}">{% endfor %}
+        <button class="btn primary lg">Place order for {{ '%g'|format(plan['allocated_quantity_kg']) }} kg {{ icon('arrow-right', 15) }}</button>
+      </form>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h3>{{ icon('map', 18) }} Optimised pickup route</h3>
+      {% if rmap %}
+      <div class="map-wrap">{{ rmap }}</div>
+      <div class="ai-note">{{ icon('sparkles', 14) }} One optimised round from <b>{{ plan['route']['depot']['name'] }}</b>: {{ plan['route']['km'] }} km, ≈ {{ plan['route']['minutes'] }} min
+        vs <b>{{ plan['route']['naive_km'] }} km</b> if each farm were collected separately.
+        {% if plan['route']['source'] != 'osrm' %}<br><span class="fine">Offline straight-line distance estimate.</span>{% endif %}</div>
+      {% else %}<p class="fine">No route to show yet.</p>{% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>{{ icon('trophy', 18) }} All ranked candidates <span class="fine">({{ matched['candidate_count'] }} eligible · score = 30% price + 25% distance + 20% quality + 15% availability + 10% reliability)</span></h3>
+    <div class="card table-card flush">
+      <table>
+        <thead><tr><th>Farm</th><th>Available</th><th>₹/kg</th><th>Grade</th><th>Harvest</th><th>Dist.</th><th>Reliab.</th><th>Score</th></tr></thead>
+        <tbody>
+          {% for c in matched['candidates'] %}
+          <tr>
+            <td><b>{{ c['farmer_name'] }}</b><div class="fine">{{ c['village'] }}</div></td>
+            <td>{{ '%g'|format(c['available_quantity_kg']) }} kg</td><td>₹{{ '%.1f'|format(c['price_per_kg']) }}</td>
+            <td>{{ c['quality_grade'] }}</td>
+            <td class="fine">{{ 'ready' if c['harvest_type'] == 'IMMEDIATE' else 'expected ' ~ c['harvest_date'] }}</td>
+            <td class="fine">{{ c['distance_km'] }} km</td><td class="fine">{{ c['reliability_score']|round|int }}</td>
+            <td><b>{{ c['match_score'] }}</b></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+{% endblock %}

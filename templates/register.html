@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Join — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+  <div class="card auth">
+    <h1>{{ icon('leaf', 22) }} Join {{ APP_NAME }}</h1>
+    <p class="fine">Free for farmers, FPOs and consumers. Platform fee only on completed sales.</p>
+    <form method="post" class="stack">
+      <div class="seg">
+        {% for val, lab, ic_name in [('farmer','Farmer / FPO','tractor'), ('consumer','Consumer','shopping-cart'), ('buyer','Bulk buyer','building-2')] %}
+        <label class="seg-item">
+          <input type="radio" name="role" value="{{ val }}" {{ 'checked' if request.form.get('role','consumer') == val }}>
+          <span>{{ icon(ic_name, 15) }} {{ lab }}</span>
+        </label>
+        {% endfor %}
+      </div>
+      <label>Full name
+        <input name="name" required value="{{ request.form.get('name','') }}" placeholder="e.g. Ramesh Patil">
+      </label>
+      <label>Email
+        <input type="email" name="email" required value="{{ request.form.get('email','') }}" placeholder="you@example.in">
+      </label>
+      <label>Password <span class="fine">(min 4 chars)</span>
+        <input type="password" name="password" required>
+      </label>
+      <label>Phone
+        <input name="phone" value="{{ request.form.get('phone','') }}" placeholder="98xxx xxxxx">
+      </label>
+      <label>Region <span class="fine">(decides which depot serves you)</span>
+        <select name="depot">
+          {% for d in depots %}<option value="{{ d['id'] }}" {{ 'selected' if request.form.get('depot') == d['id']|string }}>{{ d['name'].replace(' Central Depot','') }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Village / area <span class="fine">(farmers: your village; buyers: delivery area)</span>
+        <input name="village" value="{{ request.form.get('village','') }}" placeholder="e.g. Baramati, Pune">
+      </label>
+      <label>Address
+        <input name="address" value="{{ request.form.get('address','') }}" placeholder="House / street / city">
+      </label>
+      <button class="btn primary lg">Create account</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

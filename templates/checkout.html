@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Checkout — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="wrap">
+  <h1>Checkout</h1>
+  <div class="co-grid">
+    <form method="post" class="card stack co-form">
+      <h3>{{ icon('package', 17) }} Delivery details</h3>
+      <label>Delivery address
+        <textarea name="address" rows="2" placeholder="House / street / area">{{ user['address'] or '' }}</textarea>
+      </label>
+      <label>Delivery slot <span class="fine">— {{ tomorrow }}</span>
+        <select name="slot">
+          {% for s in slots %}<option {{ 'selected' if loop.first }}>{{ s }}</option>{% endfor %}
+        </select>
+      </label>
+      <h3>{{ icon('credit-card', 17) }} Payment</h3>
+      <label class="chk"><input type="radio" name="payment" value="UPI (demo)" checked> UPI <span class="fine">(demo gateway — no real charge)</span></label>
+      <label class="chk"><input type="radio" name="payment" value="Cash on delivery"> Cash on delivery</label>
+      <div class="note">{{ icon('flask-conical', 14) }} This is a prototype: payments are simulated end-to-end. Production build plugs in UPI/PG + escrow for farmer payouts.</div>
+      <button class="btn primary lg">Place order · {{ (total)|inr }}</button>
+    </form>
+    <div class="summary card">
+      <h3>Order summary</h3>
+      {% for r in rows %}
+      <div class="srow"><span>{{ r['crop_name'] }} × {{ '%g'|format(r['qty']) }} kg</span><b>{{ r['amount']|inr }}</b></div>
+      {% endfor %}
+      <hr>
+      <div class="srow"><span>Subtotal</span><b>{{ subtotal|inr }}</b></div>
+      <div class="srow green"><span>Savings vs mandi price</span><b>-{{ savings|inr }}</b></div>
+      <div class="srow"><span>Delivery</span><b>{{ (fee|inr) if fee else 'FREE' }}</b></div>
+      <div class="srow total"><span>Total</span><b>{{ total|inr }}</b></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

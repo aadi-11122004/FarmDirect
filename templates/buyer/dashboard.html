@@ -1,0 +1,66 @@
+{% extends "_app_base.html" %}
+{% from "_macros.html" import badge_status, sidenav %}
+{% block title %}Buyer hub — {{ APP_NAME }}{% endblock %}
+{% block sidebar %}
+{{ sidenav(url_for('buyer_dash'), 'layout-dashboard', 'Dashboard') }}
+{{ sidenav(url_for('buyer_aggregate'), 'layers', 'Smart sourcing') }}
+{{ sidenav(url_for('orders'), 'receipt', 'My orders') }}
+{{ sidenav(url_for('marketplace', sort='price_asc'), 'store', 'Wholesale marketplace') }}
+{% endblock %}
+{% block app_content %}
+  <div class="page-head">
+    <div><span class="role-tag">{{ icon('building-2', 13) }} Buyer hub</span><h1>Wholesale sourcing</h1><p class="fine">Direct from farms &amp; FPOs, no mandi middlemen</p></div>
+    <div class="cta-row"><a class="btn primary" href="{{ url_for('buyer_aggregate') }}">{{ icon('layers', 15) }} Smart sourcing</a>
+    <a class="btn outline" href="{{ url_for('marketplace', sort='price_asc') }}">Shop wholesale {{ icon('arrow-right', 14) }}</a></div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="card kpi"><span class="kicon">{{ icon('receipt', 20) }}</span><div><div class="kval">{{ agg['n_orders'] }}</div><div class="klab">Orders (30 days)</div></div></div>
+    <div class="card kpi"><span class="kicon">{{ icon('credit-card', 20) }}</span><div><div class="kval">{{ agg['spend']|inr }}</div><div class="klab">Total spend (30 days)</div></div></div>
+    <div class="card kpi"><span class="kicon">{{ icon('trending-down', 20) }}</span><div><div class="kval">{{ agg['saved']|inr }}</div><div class="klab">Saved vs mandi chain</div></div></div>
+    <div class="card kpi"><span class="kicon">{{ icon('layers', 20) }}</span><div><div class="kval"><a href="{{ url_for('buyer_aggregate') }}">Smart sourcing</a></div><div class="klab">Pool supply from many farms</div></div></div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <h3>{{ icon('bar-chart-3', 18) }} What you buy most (kg)</h3>
+      {{ top_chart }}
+    </div>
+    <div class="card">
+      <h3>{{ icon('handshake', 18) }} Request a bulk / contract quote</h3>
+      <form method="post" action="{{ url_for('buyer_quote') }}" class="stack">
+        <label>Crop
+          <select name="crop">{% for c in crops %}<option>{{ c['name'] }}</option>{% endfor %}</select>
+        </label>
+        <label>Quantity (kg/month)<input type="number" name="qty" min="10" value="500"></label>
+        <label>Note <span class="fine">(grade, schedule, packaging…)</span>
+          <input name="note" placeholder="e.g. Grade A, weekly Monday delivery">
+        </label>
+        <button class="btn primary">Send request to FPOs &amp; farmers</button>
+      </form>
+      {% for qt in quotes %}
+      <div class="qrow"><b>{{ qt['crop_name'] }} · {{ '%g'|format(qt['qty_kg']) }} kg</b>
+        <span class="fine">{{ qt['created_at'] }} · {{ qt['status'] }}</span></div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>{{ icon('receipt', 18) }} Recent orders</h3>
+    <div class="card table-card flush">
+      <table>
+        <thead><tr><th>Order</th><th>Date</th><th>Slot</th><th>Total</th><th>Saved</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          {% for o in orders %}
+          <tr>
+            <td><b>#{{ o['id'] }}</b></td><td>{{ o['placed_on'] }}</td><td>{{ o['slot'] }}</td>
+            <td><b>{{ o['total']|inr }}</b></td><td class="green">{{ o['savings']|inr }}</td>
+            <td>{{ badge_status(o['status']) }}</td>
+            <td><a class="btn soft sm" href="{{ url_for('track', oid=o['id']) }}">Track</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

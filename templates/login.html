@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Login — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+  <div class="card auth">
+    <h1>Welcome back</h1>
+    <p class="fine">Log in to your {{ APP_NAME }} account</p>
+    <form method="post" class="stack">
+      <label>Email
+        <input type="email" name="email" required placeholder="you@example.in" value="{{ request.form.get('email','') }}">
+      </label>
+      <label>Password
+        <input type="password" name="password" required placeholder="••••••">
+      </label>
+      <button class="btn primary lg">Login</button>
+    </form>
+    <p class="fine center">New here? <a href="{{ url_for('register') }}">Create a free account</a></p>
+    <hr>
+    <h3>{{ icon('zap', 17) }} One-click demo accounts <span class="fine">(password: demo123)</span></h3>
+    <div class="demo-grid">
+      {% for mail, label, ic_name in [
+        ('ramesh@fl.in','Farmer · Pune','tractor'),
+        ('fpo@fl.in','FPO · Pune','handshake'),
+        ('consumer@fl.in','Consumer · Pune','shopping-cart'),
+        ('buyer@fl.in','Bulk buyer · Pune','building-2'),
+        ('deepak@fl.in','Farmer · Nagpur','citrus'),
+        ('ocmart@fl.in','Bulk buyer · Nagpur','store'),
+        ('logistics@fl.in','Logistics','truck'),
+        ('admin@fl.in','Admin','shield-check')] %}
+      <form method="post" action="{{ url_for('login') }}">
+        <input type="hidden" name="email" value="{{ mail }}">
+        <input type="hidden" name="password" value="demo123">
+        <button class="btn soft demo">{{ icon(ic_name, 16) }} {{ label }}<span class="fine">{{ mail }}</span></button>
+      </form>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

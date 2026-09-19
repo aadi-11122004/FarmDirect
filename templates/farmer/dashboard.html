@@ -1,0 +1,92 @@
+{% extends "_app_base.html" %}
+{% from "_macros.html" import kpi, badge_status, sidenav %}
+{% block title %}Farmer dashboard — {{ APP_NAME }}{% endblock %}
+{% block side_title %}{{ "FPO desk" if farm and farm['is_fpo'] else "Farmer desk" }}{% endblock %}
+{% block sidebar %}
+{{ sidenav(url_for('farmer_dash'), 'layout-dashboard', 'Dashboard') }}
+{{ sidenav(url_for('farmer_listings'), 'boxes', 'My listings') }}
+{{ sidenav(url_for('farmer_insights'), 'sparkles', 'AI insights') }}
+{{ sidenav(url_for('marketplace'), 'store', 'Marketplace') }}
+{% endblock %}
+{% block app_content %}
+  <div class="page-head">
+    <div>
+      <span class="role-tag">{{ icon('tractor', 13) }} {{ "FPO collection centre" if farm and farm['is_fpo'] else "Farmer" }}</span>
+      <h1>{{ farm['name'] if farm else 'My farm' }}</h1>
+      <p class="fine">{{ farm['village'] if farm }}, {{ farm['district'] if farm }} · {{ icon('star', 13) }} {{ farm['rating'] if farm }}</p>
+    </div>
+    <a class="btn primary" href="{{ url_for('farmer_listings') }}">{{ icon('plus', 15) }} New listing</a>
+  </div>
+
+  <div class="kpi-row">
+    {{ kpi("hand-coins", "Earnings (30 days)", earn30|inr, "paid directly, no commission agents") }}
+    {{ kpi("trophy", "Lifetime sales", earn_total|inr, "on " ~ APP_NAME) }}
+    {{ kpi("wheat", "Active listings", listings|selectattr('status','equalto','active')|list|length, "out of "~listings|length) }}
+    {{ kpi("clock", "Orders to act on", pending|length, "confirm / pack") }}
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <h3>Daily earnings — last 14 days</h3>
+      {{ earn_chart }}
+    </div>
+    <div class="card">
+      <h3>{{ icon('handshake', 18) }} Bulk quote requests <span class="fine">from buyers</span></h3>
+      {% for qt in quotes %}
+      <div class="qrow">
+        <b>{{ qt['crop_name'] }} · {{ '%g'|format(qt['qty_kg']) }} kg</b>
+        <span class="fine">{{ qt['buyer_name'] }} — {{ qt['note'] }}</span>
+        <a class="btn soft sm" href="{{ url_for('marketplace', q=qt['crop_name'].split(' (')[0]) }}">Match listing {{ icon('arrow-right', 13) }}</a>
+      </div>
+      {% else %}<p class="fine">No open quotes right now.</p>{% endfor %}
+      <hr>
+      <div class="ai-note">{{ icon('sparkles', 15) }} <a href="{{ url_for('farmer_insights') }}"><b>Open AI Insights</b></a> — see the 14-day demand forecast and the model-suggested price for each of your crops before you set rates.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>{{ icon('clock', 18) }} Orders needing action</h3>
+    <div class="card table-card flush">
+      <table>
+        <thead><tr><th>Order</th><th>Items</th><th>Value</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for o in pending %}
+          <tr>
+            <td><b>#{{ o['id'] }}</b><div class="fine">{{ o['placed_on'] }}</div></td>
+            <td>{% for it in items.get(o['id'], []) %}{{ it['crop_name'] }} × {{ '%g'|format(it['qty']) }} kg<br>{% endfor %}</td>
+            <td><b>{{ (o['subtotal'])|inr }}</b></td>
+            <td>{{ badge_status(o['status']) }}</td>
+            <td>
+              {% if o['status'] == 'placed' %}
+              <form method="post" action="{{ url_for('farmer_order_advance', oid=o['id']) }}"><button class="btn primary sm">{{ icon('check', 14) }} Confirm</button></form>
+              {% elif o['status'] == 'confirmed' %}
+              <form method="post" action="{{ url_for('farmer_order_advance', oid=o['id']) }}"><button class="btn primary sm">{{ icon('package-check', 14) }} Mark packed</button></form>
+              {% elif pickups.get(o['id']) %}<span class="fine">{{ icon('truck', 13) }} {{ pickups[o['id']]['code'] }} · {{ pickups[o['id']]['driver_name'] }} · pickup ≈ +{{ pickups[o['id']]['eta_min'] }} min after dispatch</span>
+              {% else %}<span class="fine">waiting for pickup</span>{% endif %}
+            </td>
+          </tr>
+          {% else %}<tr><td colspan="5" class="fine">All caught up.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>{{ icon('receipt', 18) }} Recent orders</h3>
+    <div class="card table-card flush">
+      <table>
+        <thead><tr><th>Order</th><th>Items</th><th>Value</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for o in recent %}
+          <tr>
+            <td><b>#{{ o['id'] }}</b><div class="fine">{{ o['placed_on'] }}</div></td>
+            <td>{% for it in items.get(o['id'], []) %}{{ it['crop_name'] }} × {{ '%g'|format(it['qty']) }} kg<br>{% endfor %}</td>
+            <td><b>{{ o['total']|inr }}</b></td>
+            <td>{{ badge_status(o['status']) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

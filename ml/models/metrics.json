@@ -1,0 +1,32 @@
+{
+  "overall": {
+    "price_mape": 18.9,
+    "price_mape_naive": 15.4,
+    "demand_mape": 68.4,
+    "n_crops": 2,
+    "horizon_days": 14,
+    "trained_on": "01 May \u2013 11 Sep 2026"
+  },
+  "per_crop": {
+    "Tomato": {
+      "price_mape_naive_14d": 28.6,
+      "price_mape_1step": 33.1,
+      "price_mape_14d": 30.2,
+      "demand_wape_1step": 26.9,
+      "demand_wape_14d": 39.2,
+      "price_mae_qtl": 317.9,
+      "n_train": 110,
+      "n_test": 14
+    },
+    "Wheat": {
+      "price_mape_naive_14d": 2.1,
+      "price_mape_1step": 2.3,
+      "price_mape_14d": 7.7,
+      "demand_wape_1step": 37.8,
+      "demand_wape_14d": 97.6,
+      "price_mae_qtl": 201.2,
+      "n_train": 81,
+      "n_test": 14
+    }
+  }
+}

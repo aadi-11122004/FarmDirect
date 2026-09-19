@@ -1,0 +1,64 @@
+{% extends "_app_base.html" %}
+{% from "_macros.html" import badge_status, sidenav %}
+{% block title %}My listings — {{ APP_NAME }}{% endblock %}
+{% block sidebar %}
+{{ sidenav(url_for('farmer_dash'), 'layout-dashboard', 'Dashboard') }}
+{{ sidenav(url_for('farmer_listings'), 'boxes', 'My listings') }}
+{{ sidenav(url_for('farmer_insights'), 'sparkles', 'AI insights') }}
+{{ sidenav(url_for('marketplace'), 'store', 'Marketplace') }}
+{% endblock %}
+{% block app_content %}
+  <div class="page-head">
+    <div><h1>My listings</h1><p class="fine">Manage what you sell on {{ APP_NAME }}</p></div>
+  </div>
+
+  <div class="card">
+    <h3>{{ icon('plus', 17) }} Add a new listing</h3>
+    <form method="post" action="{{ url_for('farmer_listing_new') }}" class="form-row" enctype="multipart/form-data">
+      <label>Crop
+        <select name="crop_id" required>
+          {% for c in crops %}<option value="{{ c['id'] }}">{{ c['name'] }} <span class="fine">(mandi ₹{{ '%g'|format(c['base_price']|round(1)) }})</span></option>{% endfor %}
+        </select>
+      </label>
+      <label>Quantity (kg)<input type="number" name="qty" min="1" value="100" required></label>
+      <label>Your price ₹/kg<input type="number" name="price" min="1" step="0.5" value="25" required></label>
+      <label>Min. order (kg)<input type="number" name="min_order" min="1" value="1"></label>
+      <label>Grade
+        <select name="grade"><option>A</option><option>B</option><option>C</option></select>
+      </label>
+      <label>Expected harvest <span class="fine">(blank = ready now)</span><input type="date" name="expected_date" min="{{ today }}"></label>
+      <label>Photo <span class="fine">(optional, JPG/PNG/WEBP up to 5MB)</span><input type="file" name="image" accept="image/png,image/jpeg,image/webp"></label>
+      <label class="chk mid"><input type="checkbox" name="organic"> {{ icon('leaf', 15) }} Organic</label>
+      <button class="btn primary">Publish listing</button>
+    </form>
+    <p class="fine">{{ icon('lightbulb', 13) }} Tip: check <a href="{{ url_for('farmer_insights') }}">AI Insights</a> for the suggested price and demand outlook before publishing.</p>
+  </div>
+
+  <div class="card table-card">
+    <table>
+      <thead><tr><th>Crop</th><th>Price</th><th>Mandi</th><th>Available</th><th>Grade</th><th>Harvest</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for l in listings %}
+        <tr>
+          <td style="display:flex;align-items:center;gap:8px">
+            {% if l['image_path'] %}<img class="listing-thumb" src="{{ url_for('static', filename=l['image_path']) }}" alt="{{ l['crop_name'] }}">
+            {% else %}{{ crop_art(l['crop_name'], 28) }}{% endif %}
+            <b>{{ l['crop_name'] }}</b>
+          </td>
+          <td><b>{{ l['price']|inr }}</b>/kg</td>
+          <td class="fine">₹{{ '%g'|format(l['market_price']|round(1)) }}</td>
+          <td>{{ '%g'|format(l['qty_available']) }} kg</td>
+          <td>{{ l['grade'] }}{% if l['organic'] %} · {{ icon('leaf', 13) }}{% endif %}</td>
+          <td class="fine">{{ 'ready' if l['harvest_type'] == 'IMMEDIATE' else 'expected ' ~ l['harvest_date'] }}</td>
+          <td>{{ badge_status(l['status']) }}</td>
+          <td>
+            <form method="post" action="{{ url_for('farmer_listing_toggle', lid=l['id']) }}">
+              <button class="btn soft sm">{{ 'Pause' if l['status'] == 'active' else 'Activate' }}</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

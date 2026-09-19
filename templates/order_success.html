@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Order placed — {{ APP_NAME }}{% endblock %}
+{% block content %}
+<div class="wrap narrow">
+  <div class="card success">
+    <div class="success-mark">{{ icon('circle-check-big', 30) }}</div>
+    <h1>Order #{{ order['id'] }} placed!</h1>
+    <p class="fine">Payment: {{ order['payment_mode'] }} · Slot: {{ order['slot'] }} · {{ order['address'] }}</p>
+    <div class="steps">
+      {% for s in STEPS %}
+      <div class="step-dot {{ 'done' if loop.first }}">{{ loop.index }}</div>
+      {% endfor %}
+    </div>
+    <div class="card table-card">
+      <table>
+        <thead><tr><th>Item</th><th>Qty</th><th>Amount</th></tr></thead>
+        <tbody>
+          {% for it in items %}
+          <tr><td>{{ it['crop_name'] }}</td><td>{{ '%g'|format(it['qty']) }} kg</td><td>{{ it['amount']|inr }}</td></tr>
+          {% endfor %}
+          <tr class="total-row"><td colspan="2"><b>Total (you saved {{ order['savings']|inr }})</b></td><td><b>{{ order['total']|inr }}</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cta-row center">
+      <a class="btn primary" href="{{ url_for('track', oid=order['id']) }}">{{ icon('truck', 15) }} Track order</a>
+      <a class="btn outline" href="{{ url_for('orders') }}">My orders</a>
+      <a class="btn soft" href="{{ url_for('marketplace') }}">Keep shopping</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

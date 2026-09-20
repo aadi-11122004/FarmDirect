@@ -412,7 +412,7 @@ def crop_insight(crop_name):
     mandi_pred = sum(d["predicted_price_qtl"] for d in fc) / len(fc) / 100      # Rs/kg
     return dict(crop=crop_name, labels=labels, actual=actual, fdem=fdem, p_actual=p_actual, p_fc=p_fc,
                 fc=fc, outlook=outlook, outlook_pct=outlook_pct, mandi_pred=mandi_pred,
-                suggested=round(mandi_pred * 0.84 * 2) / 2, last_actual_date=hist[-1]["date"])
+                suggested=round(mandi_pred * 0.92 * 2) / 2, last_actual_date=hist[-1]["date"])
 
 
 def forecast_chips():

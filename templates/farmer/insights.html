@@ -31,7 +31,7 @@
   <div class="card">
     <h3>{{ icon('trending-up', 18) }} {{ sel }} — 14-day AI forecast <span class="fine">(hover the chart for daily values)</span></h3>
     {{ forecast_chart }}
-    <div class="ai-note">Outlook next 7 days: <b class="{{ 'up' if ins['outlook'] == 'high' else 'down' if ins['outlook'] == 'low' else '' }}">{{ ins['outlook'].upper() }} ({{ '+' if ins['outlook_pct'] >= 0 else '' }}{{ ins['outlook_pct'] }}%)</b> vs the past week. Model suggests listing at <b>₹{{ '%.1f'|format(ins['suggested']) }}/kg</b> farm-gate — you earn more than selling to agents, buyers still pay less.</div>
+    <div class="ai-note">Outlook for the next 7 days: <b class="{{ 'up' if ins['outlook'] == 'high' else 'down' if ins['outlook'] == 'low' else '' }}">{{ ins['outlook'].upper() }} ({{ '+' if ins['outlook_pct'] >= 0 else '' }}{{ ins['outlook_pct'] }}%)</b> vs the past week. Model suggests listing at <b>₹{{ '%.1f'|format(ins['suggested']) }}/kg</b> </div>
   </div>
 
   <div class="kpi-row">

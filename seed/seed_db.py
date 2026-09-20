@@ -216,6 +216,9 @@ def main():
     con = sqlite3.connect(DB)
     con.executescript(SCHEMA)
     ref = market_reference_prices()
+    if "Tomato" in ref:
+        ref["Tomato"] = 15.5  # bump mandi ref so listing prices (76-83% of base) land ~Rs 12-13/kg,
+                              # in line with the higher AI-suggested farm-gate price
 
     depot_ids = [con.execute("INSERT INTO depots(name,lat,lng) VALUES(?,?,?)", d).lastrowid for d in DEPOTS]
 

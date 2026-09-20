@@ -154,8 +154,11 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }
 .delta.up { color: var(--green-700); } .delta.down { color: var(--red); }
 .impact { margin: 26px 0; background: var(--paper); }
 .imp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin: 12px 0; }
+.imp { border-left: 2px solid var(--line); padding-left: 20px; }
+.imp:first-child { border-left: none; padding-left: 0; }
 .imp b { font-family: var(--font-serif); font-size: 1.7rem; color: var(--green-800); display: block; }
 .imp span { font-size: .86rem; color: var(--muted); }
+
 .roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin: 20px auto 40px; }
 .role .remoji { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--leaf-soft); color: var(--green-800); margin-bottom: 4px; }
 

@@ -19,7 +19,7 @@
   </div>
 
   <div class="kpi-row">
-    {{ kpi("hand-coins", "Earnings (30 days)", earn30|inr, "paid directly, no commission agents") }}
+    {{ kpi("hand-coins", "Earnings (30 days)", earn30|inr, "") }}
     {{ kpi("trophy", "Lifetime sales", earn_total|inr, "on " ~ APP_NAME) }}
     {{ kpi("wheat", "Active listings", listings|selectattr('status','equalto','active')|list|length, "out of "~listings|length) }}
     {{ kpi("clock", "Orders to act on", pending|length, "confirm / pack") }}
